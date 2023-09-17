@@ -86,6 +86,10 @@ async function main(): Promise<void> {
 
         // Update an asset which does not exist.
         await updateNonExistentAsset(contract)
+
+        // Call the oracle
+        await transactionProposal(contract);
+    
     } finally {
         gateway.close();
         client.close();
@@ -236,3 +240,23 @@ async function displayInputParameters(): Promise<void> {
     console.log(`peerEndpoint:      ${peerEndpoint}`);
     console.log(`peerHostAlias:     ${peerHostAlias}`);
 }
+
+
+async function transactionProposal(contract: Contract): Promise<void> {
+    console.log('\n--> Async Submit Transaction: transactionProposal, updates existing asset AppraisedValue');
+  
+    const commit = await contract.submitAsync('InvokeOracle', {
+        arguments: [assetId],
+    });
+    const newLatitude = utf8Decoder.decode(commit.getResult());
+  
+      console.log(`*** Successfully submitted transaction to change Coordinates ${newLatitude} to Saptha`);
+      console.log('*** Waiting for transaction commit');
+  
+      const status = await commit.getStatus();
+      if (!status.successful) {
+          throw new Error(`Transaction ${status.transactionId} failed to commit with status code ${status.code}`);
+      }
+  
+      console.log('*** Transaction committed successfully');
+  }
